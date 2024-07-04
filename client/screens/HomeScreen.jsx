@@ -1,0 +1,148 @@
+import { useColorScheme } from "nativewind";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { Switch } from "react-native-switch";
+import {
+  Button,
+  Image,
+  Pressable,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import NavBar from "../components/NavBar";
+import BottomSheet, { BottomSheetBackdrop } from "@gorhom/bottom-sheet";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+
+const HomeScreen = ({ navigation }) => {
+  useEffect(() => {
+    storeTheme(getTheme())
+  }, [])
+  
+  const getTheme = async () => {
+    try {
+      const value = await AsyncStorage.getItem('theme');
+      if (value !== null) {
+        return value
+      }
+    } catch (error) {
+      console.error("Nothing found")
+    }
+  }
+  const storeTheme = async (value) => {
+    try {
+      await AsyncStorage.setItem("theme", JSON.stringify(value));
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const snapPoints = useMemo(() => ["50%"], []);
+  const { colorScheme, toggleColorScheme } = useColorScheme();
+  const bottomSheetRef = useRef(null);
+  const [open, setOpen] = useState(false);
+  const handleThemeChange = () => {
+    toggleColorScheme(!colorScheme);
+    storeTheme(colorScheme)
+  }
+  const handlePress = () => {
+    if (!open) {
+      bottomSheetRef.current?.collapse();
+    } else {
+      bottomSheetRef.current?.close();
+    }
+  };
+  return (
+    <>
+      <View className={colorScheme == "dark" ? "bg-black pt-10" : "pt-10"}>
+        <NavBar opened={open} press={handlePress} />
+      </View>
+      <GestureHandlerRootView>
+        <View className="h-screen w-screen dark:bg-black">
+          <View className="flex-1 items-center justify-center">
+            <Button
+              title="Go profile"
+              color="crimson"
+              onPress={() => navigation.navigate("Profile")}
+            />
+            <Text className="dark:text-blue-50">TimeTable</Text>
+          </View>
+        </View>
+        <BottomSheet
+          backgroundStyle={{
+            backgroundColor: colorScheme === "dark" ? "crimson" : "snow",
+            borderBlockColor: "white",
+          }}
+          ref={bottomSheetRef}
+          index={0}
+          snapPoints={snapPoints}
+          enablePanDownToClose={true}
+          backdropComponent={(backdropProps) => (
+            <BottomSheetBackdrop
+              {...backdropProps}
+              appearsOnIndex={0}
+              disappearsOnIndex={-1}
+              enableTouchThrough={true}
+              style={[
+                { backgroundColor: "rgba(0, 0, 0)" },
+                StyleSheet.absoluteFillObject,
+              ]}
+            />
+          )}
+          onChange={() => setOpen((old) => !old)}
+        >
+          <View className="flex justify-center pt-3">
+            <View className="flex p-2 items-center justify-around flex-row">
+              <Text className="text-black text-xl font-bold">Theme</Text>
+              <Switch
+                value={colorScheme == "dark"}
+                onValueChange={handleThemeChange}
+                activeText={"dark"}
+                inActiveText={"light"}
+                activeTextStyle={{ fontSize: 14 }}
+                inactiveTextStyle={{ fontSize: 14 }}
+                switchWidthMultiplier={2.3}
+                circleSize={30}
+                circleBorderWidth={0}
+                backgroundActive={"black"}
+                backgroundInactive={"gray"}
+                circleActiveColor={"white"}
+                circleInActiveColor={"#000000"}
+              />
+            </View>
+            <View className="flex mt-20 py-6 items-center flex-row justify-evenly">
+              <Text className="text-black text-2xlTouchableOpacity font-bold">
+                Profile
+              </Text>
+              <TouchableOpacity
+                className="p-4 bg-black rounded-full"
+                onPress={() => navigation.navigate("Profile")}
+              >
+                <Image
+                  className="h-8 w-8"
+                  source={require("../assets/moon.jpg")}
+                />
+              </TouchableOpacity>
+            </View>
+            <View className="flex items-center flex-row justify-evenly">
+              <TouchableOpacity
+                className="w-4/6 py-6 bg-crimson dark:bg-black rounded-lg"
+                onPress={() => console.log("Logout")}
+              >
+                <Text className="text-center text-xl text-white">Logout</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </BottomSheet>
+      </GestureHandlerRootView>
+    </>
+  );
+};
+
+export default HomeScreen;
