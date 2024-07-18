@@ -11,6 +11,7 @@ import {
   Button,
   Image,
   Pressable,
+  SafeAreaView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -21,36 +22,40 @@ import BottomSheet, { BottomSheetBackdrop } from "@gorhom/bottom-sheet";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
+const THEME_KEY = "theme";
+
 const HomeScreen = ({ navigation }) => {
+  const { colorScheme, setColorScheme } = useColorScheme();
+  const [theme, setTheme] = useState(colorScheme || "light");
   useEffect(() => {
-    storeTheme(getTheme())
-  }, [])
-  
-  const getTheme = async () => {
-    try {
-      const value = await AsyncStorage.getItem('theme');
-      if (value !== null) {
-        return value
+    const loadTheme = async () => {
+      try {
+        const storedTheme = await AsyncStorage.getItem(THEME_KEY);
+        if (storedTheme) {
+          setTheme(storedTheme);
+          setColorScheme(storedTheme);
+        }
+      } catch (error) {
+        console.error("Failed to load theme:", error);
       }
-    } catch (error) {
-      console.error("Nothing found")
-    }
-  }
-  const storeTheme = async (value) => {
-    try {
-      await AsyncStorage.setItem("theme", JSON.stringify(value));
-    } catch (error) {
-      console.log(error);
-    }
-  };
+    };
+
+    loadTheme();
+  }, []);
   const snapPoints = useMemo(() => ["50%"], []);
-  const { colorScheme, toggleColorScheme } = useColorScheme();
   const bottomSheetRef = useRef(null);
   const [open, setOpen] = useState(false);
-  const handleThemeChange = () => {
-    toggleColorScheme(!colorScheme);
-    storeTheme(colorScheme)
-  }
+  const handleThemeChange = async () => {
+    const newTheme = theme === "dark" ? "light" : "dark";
+    setTheme(newTheme);
+    setColorScheme(newTheme);
+
+    try {
+      await AsyncStorage.setItem(THEME_KEY, newTheme);
+    } catch (error) {
+      console.error("Failed to save theme:", error);
+    }
+  };
   const handlePress = () => {
     if (!open) {
       bottomSheetRef.current?.collapse();
@@ -59,19 +64,19 @@ const HomeScreen = ({ navigation }) => {
     }
   };
   return (
-    <>
-      <View className={colorScheme == "dark" ? "bg-black pt-10" : "pt-10"}>
+    <SafeAreaView className="flex-1">
+      <View className={colorScheme == "dark" ? "bg-black" : ""}>
         <NavBar opened={open} press={handlePress} />
       </View>
       <GestureHandlerRootView>
         <View className="h-screen w-screen dark:bg-black">
           <View className="flex-1 items-center justify-center">
-            <Button
+            {/* <Button
               title="Go profile"
               color="crimson"
               onPress={() => navigation.navigate("Profile")}
             />
-            <Text className="dark:text-blue-50">TimeTable</Text>
+            <Text className="dark:text-blue-50">TimeTable</Text> */}
           </View>
         </View>
         <BottomSheet
@@ -80,7 +85,8 @@ const HomeScreen = ({ navigation }) => {
             borderBlockColor: "white",
           }}
           ref={bottomSheetRef}
-          index={0}
+          index={-1}
+          enableOverDrag
           snapPoints={snapPoints}
           enablePanDownToClose={true}
           backdropComponent={(backdropProps) => (
@@ -117,9 +123,7 @@ const HomeScreen = ({ navigation }) => {
               />
             </View>
             <View className="flex mt-20 py-6 items-center flex-row justify-evenly">
-              <Text className="text-black text-2xlTouchableOpacity font-bold">
-                Profile
-              </Text>
+              <Text className="text-black text-2xl font-bold">Profile</Text>
               <TouchableOpacity
                 className="p-4 bg-black rounded-full"
                 onPress={() => navigation.navigate("Profile")}
@@ -141,7 +145,7 @@ const HomeScreen = ({ navigation }) => {
           </View>
         </BottomSheet>
       </GestureHandlerRootView>
-    </>
+    </SafeAreaView>
   );
 };
 

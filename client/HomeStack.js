@@ -1,6 +1,5 @@
 import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { NavigationContainer } from "@react-navigation/native";
 import HomeScreen from "./screens/HomeScreen";
 import Profile from "./screens/Profile";
 import { useColorScheme } from "nativewind";
@@ -8,7 +7,7 @@ import { useColorScheme } from "nativewind";
 const Stack = createNativeStackNavigator();
 
 const HomeStack = () => {
-  const { colorScheme, toggleColorScheme } = useColorScheme();
+  const { colorScheme } = useColorScheme();
   return (
     <Stack.Navigator
       screenOptions={{
@@ -16,7 +15,8 @@ const HomeStack = () => {
         headerStyle: {
           backgroundColor: colorScheme === "dark" ? "black" : "crimson",
         },
-        animation:"slide_from_bottom"
+        animation: "slide_from_right",
+        animationDuration: 100,
       }}
     >
       <Stack.Screen name="Dashboard" component={HomeScreen} />
